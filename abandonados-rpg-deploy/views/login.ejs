@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Abandonados | Acesso</title>
+    <link rel="stylesheet" href="/public/styles/gothic.css" />
+  </head>
+  <body>
+    <main class="auth-wrap">
+      <section class="auth-card" style="width: min(94vw, 520px); padding: 28px">
+        <p class="kicker">Abandonados / Grimorio de acesso</p>
+        <h1 style="font-size: clamp(2.2rem, 8vw, 4rem)">Entrar na mesa</h1>
+        <p class="subtitle">
+          Entre como jogador para abrir sua ficha viva ou crie uma conta de Mestre para vigiar a mesa,
+          gerar links do OBS e conduzir a sessao.
+        </p>
+
+        <div class="tabs" style="margin: 24px 0 18px" role="tablist">
+          <button class="tab active" id="loginTab" type="button">Entrar</button>
+          <button class="tab" id="registerTab" type="button">Criar Conta</button>
+        </div>
+
+        <% if (typeof error !== "undefined" && error) { %>
+          <p class="message error">Falha: <%= error %></p>
+        <% } else if (typeof success !== "undefined" && success) { %>
+          <p class="message"><%= success %></p>
+        <% } else { %>
+          <p class="message">O selo da sessao aguarda suas credenciais.</p>
+        <% } %>
+
+        <form id="loginPanel" action="/login" method="post" class="grid">
+          <label class="field">
+            Nome de usuario
+            <input name="username" type="text" autocomplete="username" required />
+          </label>
+          <label class="field">
+            Senha
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn primary" type="submit">Entrar</button>
+        </form>
+
+        <form id="registerPanel" action="/register" method="post" class="grid hidden">
+          <label class="field">
+            Nome de usuario
+            <input name="username" type="text" autocomplete="username" minlength="3" required />
+          </label>
+          <label class="field">
+            Senha
+            <input name="password" type="password" autocomplete="new-password" required />
+          </label>
+          <label class="field">
+            Tipo de conta
+            <select id="registerRole" name="role">
+              <option value="player">Jogador</option>
+              <option value="master">Mestre</option>
+            </select>
+          </label>
+          <label class="field hidden" id="masterKeyField">
+            Chave do Mestre (Apenas para Admin)
+            <input
+              id="masterKeyInput"
+              name="masterKey"
+              type="text"
+              autocomplete="off"
+              disabled
+              placeholder="Digite a chave secreta da mesa"
+            />
+          </label>
+          <button class="btn primary" type="submit">Criar Conta</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="/public/js/login-tabs.js"></script>
+  </body>
+</html>

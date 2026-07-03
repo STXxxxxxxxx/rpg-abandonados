@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+  <% const pageTitle = typeof title !== "undefined" ? title : "Acesso negado"; %>
+  <% const pageMessage = typeof message !== "undefined" ? message : "Voce nao tem permissao para abrir esta area."; %>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/public/styles/gothic.css" />
+  </head>
+  <body>
+    <main class="auth-wrap">
+      <section class="auth-card" style="width: min(94vw, 560px); padding: 28px">
+        <p class="kicker">Porta selada</p>
+        <h1 style="font-size: clamp(2rem, 8vw, 4rem)"><%= pageTitle %></h1>
+        <p class="subtitle"><%= pageMessage %></p>
+        <a class="btn primary" href="/" style="margin-top: 22px">Voltar ao acesso</a>
+      </section>
+    </main>
+  </body>
+</html>

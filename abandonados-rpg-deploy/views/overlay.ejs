@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Overlay | <%= character.nome %></title>
+    <link rel="stylesheet" href="/public/styles/gothic.css" />
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body class="overlay-body">
+    <aside class="overlay-shell overlay-minimal" aria-live="polite">
+      <header class="overlay-header">
+        <p class="overlay-kicker">Abandonado</p>
+        <h1 class="overlay-title" id="overlayName"><%= character.nome %></h1>
+      </header>
+
+      <section class="overlay-vitals" aria-label="Status vitais">
+        <article class="overlay-vital overlay-vital-pv">
+          <span class="overlay-vital-label">PV</span>
+          <strong class="overlay-vital-number" id="overlayPv">0 / 0</strong>
+        </article>
+        <article class="overlay-vital overlay-vital-ps">
+          <span class="overlay-vital-label">PS</span>
+          <strong class="overlay-vital-number" id="overlayPs">0 / 0</strong>
+        </article>
+      </section>
+
+      <footer class="overlay-footer">
+        <span class="overlay-mini-stat" id="overlayDef">&#128737;&#65039; DEF 0</span>
+        <span class="overlay-mini-stat overlay-ammo-stat hidden" id="overlayAmmo">&#9889; 0 / 0</span>
+      </footer>
+    </aside>
+
+    <script>
+      window.__CHARACTER__ = <%- characterJson %>;
+      window.__OVERLAY_TOKEN__ = "<%= overlayToken %>";
+    </script>
+    <script src="/public/js/overlay.js"></script>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "rpg-obs-gothic-fullstack",
+  "version": "1.0.0",
+  "description": "Sistema full-stack local para RPG de mesa com Express, MongoDB, Socket.io, sessoes e EJS.",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.1",
+    "mongoose": "^8.5.2",
+    "socket.io": "^4.7.5"
+  }
+}

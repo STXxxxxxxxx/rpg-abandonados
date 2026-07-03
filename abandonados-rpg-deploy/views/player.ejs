@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Abandonados | <%= character.nome %></title>
+    <link rel="stylesheet" href="/public/styles/gothic.css" />
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="kicker">Ficha viva do jogador</p>
+          <h1 id="characterName"><%= character.nome %></h1>
+          <p class="subtitle">
+            Vida, sanidade, municao, dinheiro, rituais e inventario sincronizados com Mestre e OBS.
+          </p>
+        </div>
+        <div class="top-actions">
+          <span class="status-pill" id="socketStatus">Offline</span>
+          <button class="btn ghost" id="shortRestButton" type="button">Descanso Curto</button>
+          <button class="btn ghost" id="longRestButton" type="button">Descanso Longo</button>
+          <form action="/logout" method="post">
+            <button class="btn ghost" type="submit">Sair</button>
+          </form>
+        </div>
+      </section>
+
+      <nav class="tabs sheet-tabs" style="margin: 18px 0" aria-label="Navegacao da ficha">
+        <button class="tab active" type="button" data-player-tab="ficha">Minha Ficha</button>
+        <button class="tab" type="button" data-player-tab="inventario">Inventario & Rituais</button>
+        <button class="tab hidden shop-tab" id="shopsHubTab" type="button" data-player-tab="lojas">
+          Lojas do Vilarejo
+        </button>
+      </nav>
+
+      <section id="fichaPanel" class="player-tab-panel">
+        <section class="grid two">
+          <div class="panel">
+            <header class="panel-header">
+              <div>
+                <p class="section-kicker">Sinais vitais</p>
+                <h2>Marcadores dinamicos</h2>
+              </div>
+            </header>
+            <div class="grid" id="resourcesPanel" style="padding: 18px"></div>
+          </div>
+
+          <aside class="panel">
+            <header class="panel-header">
+              <div>
+                <p class="section-kicker">Estado atual</p>
+                <h2>Recursos e rituais</h2>
+              </div>
+            </header>
+            <div style="padding: 18px">
+              <div class="metric-top"><strong>Dinheiro</strong><span id="moneyValue"><%= character.dinheiro %></span></div>
+              <div class="metric-top"><strong>Defesa</strong><span id="defenseValue"><%= character.defesa %></span></div>
+              <div class="metric-top"><strong>Arma equipada</strong><span id="equippedWeaponName"><%= character.arma_equipada || "sem arma" %></span></div>
+              <div class="metric-top"><strong>Dano</strong><span id="equippedWeaponDamage"><%= character.arma_equipada_dano || "-" %></span></div>
+              <p class="section-kicker" style="margin-top: 18px">Rituais</p>
+              <ul class="plain-list compact-list" id="ritualList"></ul>
+            </div>
+          </aside>
+        </section>
+
+        <section class="panel protection-panel" style="margin-top: 18px">
+          <header class="panel-header">
+            <div>
+              <p class="section-kicker">Equipamento de Protecao</p>
+              <h2>Vestuario e escudo</h2>
+            </div>
+            <span class="small">Defesa = AGI + armadura + escudo</span>
+          </header>
+          <div class="defense-controls protection-controls" style="padding: 18px">
+            <label class="field">
+              Armadura equipada
+              <select id="armorSelect">
+                <% armorCatalog.forEach((armor) => { %>
+                  <option value="<%= armor.nome %>" <%= character.armadura_equipada === armor.nome ? "selected" : "" %>>
+                    <%= armor.nome %> (+<%= armor.bonus %> Defesa<%= armor.penalidades.length ? ` | Desvantagem: ${armor.penalidades.join(", ")}` : "" %>)
+                  </option>
+                <% }) %>
+              </select>
+            </label>
+            <label class="field">
+              Condicao da armadura
+              <select id="armorConditionSelect">
+                <% ["Boa", "Desgastada", "Quebrada"].forEach((condition) => { %>
+                  <option value="<%= condition %>" <%= character.armadura_condicao === condition ? "selected" : "" %>>
+                    <%= condition %>
+                  </option>
+                <% }) %>
+              </select>
+            </label>
+            <label class="field checkbox-field">
+              <input id="shieldToggle" type="checkbox" <%= character.escudo_equipado ? "checked" : "" %> />
+              Equipar Escudo (+1 Defesa)
+            </label>
+            <label class="field">
+              Condicao do escudo
+              <select id="shieldConditionSelect" <%= character.escudo_equipado ? "" : "disabled" %>>
+                <% ["Boa", "Desgastada", "Quebrada"].forEach((condition) => { %>
+                  <option value="<%= condition %>" <%= character.escudo_condicao === condition ? "selected" : "" %>>
+                    <%= condition %>
+                  </option>
+                <% }) %>
+              </select>
+            </label>
+            <p class="small" id="armorPenaltyNote"></p>
+          </div>
+        </section>
+
+        <section class="grid two" style="margin-top: 18px">
+          <div class="panel">
+            <header class="panel-header">
+              <div>
+                <p class="section-kicker">Atributos</p>
+                <h2>Base do Abandonado</h2>
+              </div>
+            </header>
+            <div class="attribute-grid" id="attributesGrid" style="padding: 18px"></div>
+          </div>
+
+          <aside class="panel">
+            <header class="panel-header">
+              <div>
+                <p class="section-kicker">Estigma</p>
+                <h2 id="stigmaTitle">Marca do Cavaleiro</h2>
+              </div>
+            </header>
+            <div class="stigma-preview" id="stigmaBox" style="margin: 18px"></div>
+          </aside>
+        </section>
+
+        <section class="panel" style="margin-top: 18px">
+          <header class="panel-header">
+            <div>
+              <p class="section-kicker">Pericias</p>
+              <h2>Especializacoes</h2>
+            </div>
+          </header>
+          <div class="skills-readout" id="skillsGrid" style="padding: 18px"></div>
+        </section>
+      </section>
+
+      <section id="inventarioPanel" class="player-tab-panel hidden">
+        <section class="panel">
+          <header class="panel-header">
+            <div>
+              <p class="section-kicker">Inventario</p>
+              <h2>Mochila, armas e reliquias</h2>
+            </div>
+            <span class="small" id="inventoryUsed"></span>
+          </header>
+          <div style="padding: 18px">
+            <form id="inventoryForm" class="form-grid inventory-grid" style="align-items: end">
+              <label class="field">
+                Item
+                <input id="itemName" type="text" placeholder="Ex: pistola antiga, ervas, reliquia..." required />
+              </label>
+              <label class="field">
+                Peso
+                <input id="itemPeso" type="number" min="0" step="0.5" value="1" />
+              </label>
+              <label class="field">
+                Quantidade
+                <input id="itemQuantity" type="number" min="1" value="1" />
+              </label>
+              <label class="field">
+                Dano
+                <input id="itemDamage" type="text" placeholder="Ex: 1d10+2" />
+              </label>
+              <label class="field checkbox-field">
+                <input id="itemIsWeapon" type="checkbox" />
+                E arma
+              </label>
+              <label class="field checkbox-field">
+                <input id="itemEquipped" type="checkbox" />
+                Equipar agora
+              </label>
+              <button class="btn primary" id="addItemButton" type="submit">Adicionar</button>
+            </form>
+            <p class="message warning" id="inventoryWarning"></p>
+            <div class="filter-bar" id="inventoryFilters" aria-label="Filtros de inventario">
+              <button class="filter-chip active" type="button" data-inventory-filter="tudo">Tudo</button>
+              <button class="filter-chip" type="button" data-inventory-filter="armas">Armas</button>
+              <button class="filter-chip" type="button" data-inventory-filter="protecoes">Protecoes</button>
+              <button class="filter-chip" type="button" data-inventory-filter="consumiveis">Consumiveis</button>
+              <button class="filter-chip" type="button" data-inventory-filter="outros">Outros</button>
+            </div>
+            <ul class="inventory-list" id="inventoryList"></ul>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top: 18px">
+          <header class="panel-header">
+            <div>
+              <p class="section-kicker">Rituais</p>
+              <h2>Pactos e ancoras</h2>
+            </div>
+          </header>
+          <div class="ritual-scroll-grid" id="ritualCards" style="padding: 18px"></div>
+        </section>
+      </section>
+
+      <section id="lojasPanel" class="player-tab-panel hidden">
+        <% Object.entries(shopCatalog).forEach(([shopKey, shop]) => { %>
+          <section class="panel shop-panel hidden gothic-fade" data-shop-panel="<%= shopKey %>" style="padding: 24px">
+            <p class="section-kicker">Loja liberada pelo Mestre</p>
+            <h2><%= shop.nome %></h2>
+            <p class="subtitle"><%= shop.subtitulo %></p>
+            <div class="shop-table-wrap">
+              <table class="shop-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Preco</th>
+                    <th>Condicao/Usos</th>
+                    <th>Obs</th>
+                    <th>Acao</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% shop.itens.forEach((item, itemIndex) => { %>
+                    <tr>
+                      <td><%= item.nome %></td>
+                      <td><%= item.preco !== undefined ? `${item.preco} moedas` : "-" %></td>
+                      <td><%= item.condicao || item.usos || "-" %></td>
+                      <td><%= item.obs || "-" %></td>
+                      <td>
+                        <button
+                          class="btn ghost shop-buy-button"
+                          type="button"
+                          data-buy-shop="<%= shopKey %>"
+                          data-buy-index="<%= itemIndex %>"
+                        >
+                          Comprar
+                        </button>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        <% }) %>
+      </section>
+    </main>
+
+    <button class="roll-log-toggle" id="rollLogToggle" type="button">Rolagens</button>
+    <aside class="roll-log-drawer" id="rollLogDrawer" aria-live="polite">
+      <header>
+        <p class="section-kicker">Mesa</p>
+        <h2>Ultimas rolagens</h2>
+      </header>
+      <ul class="plain-list compact-list" id="rollLogList">
+        <li><span>Nenhuma rolagem registrada.</span><span>-</span></li>
+      </ul>
+    </aside>
+
+    <div class="ritual-flash" id="ritualFlash" aria-hidden="true"></div>
+    <div class="ritual-cast-text hidden" id="ritualCastText"></div>
+    <div class="death-modal hidden" id="ritualConfirmModal" role="dialog" aria-modal="true" aria-labelledby="ritualConfirmTitle">
+      <section class="death-modal-card">
+        <p class="section-kicker">Sacrificio</p>
+        <h2 id="ritualConfirmTitle">Conjurar Ritual</h2>
+        <p class="subtitle">Voce tem certeza de que deseja realizar este sacrificio?</p>
+        <p class="death-target">
+          Ritual: <strong id="ritualConfirmName"></strong>
+        </p>
+        <div class="card-actions death-actions">
+          <button class="btn ghost" id="ritualCancelButton" type="button">Cancelar</button>
+          <button class="btn danger" id="ritualConfirmButton" type="button">Conjurar</button>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__CHARACTER__ = <%- characterJson %>;
+      window.__SHOP_CATALOG__ = <%- shopCatalogJson %>;
+      window.__ARMOR_CATALOG__ = <%- armorCatalogJson %>;
+    </script>
+    <script src="/public/js/ficha.js"></script>
+  </body>
+</html>

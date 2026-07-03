@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Abandonados | Criar Ficha</title>
+    <link rel="stylesheet" href="/public/styles/gothic.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="kicker">Rito de fundacao</p>
+          <h1>Criar Ficha</h1>
+          <p class="subtitle">
+            Distribua atributos, selecione pericias e escolha o Estigma deixado por um dos Cavaleiros.
+            PV e PS serao calculados automaticamente antes de salvar.
+          </p>
+        </div>
+        <form action="/logout" method="post" class="top-actions">
+          <button class="btn ghost" type="submit">Sair</button>
+        </form>
+      </section>
+
+      <section class="panel wizard-panel" style="margin-top: 18px; padding: 22px">
+        <% if (error) { %>
+          <p class="message error">
+            <%= error === "attribute_points_exceeded"
+              ? "A soma dos atributos nao pode ultrapassar 15 pontos."
+              : error === "skill_points_exceeded"
+                ? "A soma das pericias nao pode ultrapassar 10 pontos."
+                : error === "missing_character_name"
+                  ? "Informe o nome do Abandonado."
+                  : error === "initial_weapons_exceeded"
+                    ? "Escolha no maximo 2 armas iniciais."
+                    : error === "invalid_initial_weapon"
+                      ? "Uma das armas selecionadas nao existe no catalogo."
+                      : error === "initial_rituals_exceeded"
+                        ? "Escolha no maximo 1 ritual inicial."
+                        : error === "invalid_initial_ritual"
+                          ? "O ritual selecionado nao existe no catalogo."
+                  : error %>
+          </p>
+        <% } else { %>
+          <p class="message" id="wizardMessage">A primeira pagina do grimorio esta aberta.</p>
+        <% } %>
+
+        <nav class="tabs wizard-steps" aria-label="Etapas da ficha">
+          <button class="tab active" type="button" data-wizard-step="1">1. Atributos</button>
+          <button class="tab" type="button" data-wizard-step="2">2. Pericias</button>
+          <button class="tab" type="button" data-wizard-step="3">3. Estigma</button>
+          <button class="tab" type="button" data-wizard-step="4">4. Ritual</button>
+          <button class="tab" type="button" data-wizard-step="5">5. Equipamento</button>
+        </nav>
+
+        <form action="/criar-ficha" method="post" id="wizardForm" class="grid" style="margin-top: 18px">
+          <section class="wizard-page" data-page="1">
+            <p class="section-kicker">Etapa 1</p>
+            <h2>Atributos base</h2>
+            <p class="subtitle" style="margin-bottom: 16px">
+              Cada atributo comeca em 1 e pode subir ate 4 na criacao. Pontos usados:
+              <strong id="attributePoints">6/15</strong>
+            </p>
+            <div class="form-grid">
+              <label class="field">Nome do personagem<input name="name" type="text" placeholder="Ex: Elias Moura" required /></label>
+              <label class="field">Dinheiro inicial<input name="dinheiro" type="number" min="0" value="0" /></label>
+              <label class="field">Vigor (VIG)<input class="attribute-input" name="vigor" type="number" min="1" max="4" value="1" /></label>
+              <label class="field">Agilidade (AGI)<input class="attribute-input" name="agilidade" type="number" min="1" max="4" value="1" /></label>
+              <label class="field">Forca (FOR)<input class="attribute-input" name="forca" type="number" min="1" max="4" value="1" /></label>
+              <label class="field">Intelecto (INT)<input class="attribute-input" name="intelecto" type="number" min="1" max="4" value="1" /></label>
+              <label class="field">Presenca (PRE)<input class="attribute-input" name="presenca" type="number" min="1" max="4" value="1" /></label>
+              <label class="field">Instinto (INS)<input class="attribute-input" name="instinto" type="number" min="1" max="4" value="1" /></label>
+              <label class="field">Limite de inventario<input name="limite_inventario" type="number" min="1" value="6" /></label>
+            </div>
+            <p class="message warning" id="attributeWarning"></p>
+          </section>
+
+          <section class="wizard-page hidden" data-page="2">
+            <p class="section-kicker">Etapa 2</p>
+            <h2>Pericias</h2>
+            <p class="subtitle" style="margin-bottom: 16px">
+              Distribua ate 10 pontos. Cada pericia comeca em 0 e pode ir ate 3 nesta etapa.
+              Pontos usados: <strong id="skillPoints">0/10</strong>
+            </p>
+            <div class="skills-grid">
+              <% Object.entries(skillGroups).forEach(([group, skills]) => { %>
+                <section class="skill-group">
+                  <h3><%= group %></h3>
+                  <% skills.forEach((skill) => { %>
+                    <label class="field">
+                      <%= skill.replaceAll("_", " ") %>
+                      <input
+                        class="skill-input"
+                        name="pericia_<%= group %>_<%= skill %>"
+                        type="number"
+                        min="0"
+                        max="3"
+                        value="0"
+                      />
+                    </label>
+                  <% }) %>
+                </section>
+              <% }) %>
+            </div>
+            <p class="message warning" id="skillWarning"></p>
+          </section>
+
+          <section class="wizard-page hidden" data-page="3">
+            <p class="section-kicker">Etapa 3</p>
+            <h2>O Estigma</h2>
+            <div class="form-grid" style="margin-top: 16px">
+              <label class="field">
+                Cavaleiro que tocou sua morte
+                <select id="stigmaSelect" name="estigma_tipo">
+                  <% Object.keys(stigmaLibrary).forEach((type) => { %>
+                    <option value="<%= type %>"><%= type %></option>
+                  <% }) %>
+                </select>
+              </label>
+            </div>
+            <article class="stigma-preview" id="stigmaPreview"></article>
+          </section>
+
+          <section class="wizard-page hidden" data-page="4">
+            <p class="section-kicker">Etapa 4</p>
+            <h2>Escolha seu Ritual Inicial</h2>
+            <p class="subtitle" style="margin-bottom: 16px">
+              Escolha no maximo 1 ritual. Ele sera registrado na ficha como um pacto de sobrevivencia.
+              Selecionados: <strong id="ritualChoiceCount">0/1</strong>
+            </p>
+            <div class="ritual-choice-grid">
+              <% ritualCatalog.forEach((ritual) => { %>
+                <label class="ritual-choice">
+                  <input class="ritual-choice-input" name="ritual_inicial" type="checkbox" value="<%= ritual.id %>" />
+                  <span class="ritual-choice-body">
+                    <span class="section-kicker">Ritual</span>
+                    <strong><%= ritual.nome %></strong>
+                    <small><b>Ato:</b> <%= ritual.ato %></small>
+                    <small><b>Preco:</b> <%= ritual.preco %></small>
+                    <small><b>Ancora:</b> <%= ritual.ancora %></small>
+                  </span>
+                </label>
+              <% }) %>
+            </div>
+            <p class="message warning" id="ritualWarning"></p>
+          </section>
+
+          <section class="wizard-page hidden" data-page="5">
+            <p class="section-kicker">Etapa 5</p>
+            <h2>Equipamento inicial</h2>
+            <p class="subtitle" style="margin-bottom: 16px">
+              Escolha ate 2 armas do catalogo oficial. Municao da ficha comeca em 0, mesmo se a arma usar projeteis.
+              Selecionadas: <strong id="weaponChoiceCount">0/2</strong>
+            </p>
+            <div class="weapon-choice-grid">
+              <% weaponCatalog.forEach((weapon) => { %>
+                <label class="weapon-choice">
+                  <input class="weapon-choice-input" name="armas_iniciais" type="checkbox" value="<%= weapon.id %>" />
+                  <span class="weapon-choice-body">
+                    <span class="section-kicker"><%= weapon.categoria %></span>
+                    <strong><%= weapon.nome %></strong>
+                    <small>Dano: <%= weapon.dano %></small>
+                    <small><%= weapon.propriedades %></small>
+                    <% if (weapon.requerMunicao) { %>
+                      <small>Municao: <%= weapon.tipoMunicao %></small>
+                    <% } else { %>
+                      <small>Nao requer municao</small>
+                    <% } %>
+                  </span>
+                </label>
+              <% }) %>
+            </div>
+            <p class="message warning" id="weaponWarning"></p>
+          </section>
+
+          <div class="top-actions" style="justify-content: space-between; margin-top: 8px">
+            <button class="btn ghost" id="prevStepButton" type="button">Voltar</button>
+            <button class="btn" id="nextStepButton" type="button">Proximo</button>
+            <button class="btn primary hidden" id="submitWizardButton" type="submit">Selar Ficha</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      window.__STIGMAS__ = <%- stigmaLibraryJson %>;
+    </script>
+    <script src="/public/js/wizard.js"></script>
+  </body>
+</html>

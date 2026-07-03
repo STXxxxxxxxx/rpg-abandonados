@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Abandonados | Criar Ficha</title>
+    <link rel="stylesheet" href="/public/styles/gothic.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="kicker">Criacao do Abandonado</p>
+          <h1>Nova Ficha</h1>
+          <p class="subtitle">
+            Defina os sinais vitais iniciais, a arma equipada e a capacidade da mochila.
+            Depois disso, a ficha passa a sincronizar em tempo real com Mestre e OBS.
+          </p>
+        </div>
+        <form action="/logout" method="post" class="top-actions">
+          <button class="btn ghost" type="submit">Sair</button>
+        </form>
+      </section>
+
+      <section class="panel" style="margin-top: 18px; padding: 22px">
+        <% if (error) { %>
+          <p class="message error">Falha: <%= error %></p>
+        <% } %>
+
+        <form action="/criar-ficha" method="post" class="grid">
+          <div class="form-grid">
+            <label class="field">
+              Nome do personagem
+              <input name="nome" type="text" placeholder="Ex: Elias Moura" required />
+            </label>
+            <label class="field">
+              Arma equipada
+              <input name="arma_equipada" type="text" placeholder="Ex: Revolver oxidado" />
+            </label>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              Vida maxima
+              <input name="vida_max" type="number" min="1" value="10" required />
+            </label>
+            <label class="field">
+              Vida atual
+              <input name="vida_atual" type="number" min="0" value="10" required />
+            </label>
+            <label class="field">
+              Sanidade maxima
+              <input name="sanidade_max" type="number" min="1" value="10" required />
+            </label>
+            <label class="field">
+              Sanidade atual
+              <input name="sanidade_atual" type="number" min="0" value="10" required />
+            </label>
+            <label class="field">
+              Municao maxima
+              <input name="municao_max" type="number" min="0" value="6" required />
+            </label>
+            <label class="field">
+              Municao atual
+              <input name="municao_atual" type="number" min="0" value="6" required />
+            </label>
+            <label class="field">
+              Limite de inventario
+              <input name="limite_inventario" type="number" min="1" value="6" required />
+            </label>
+          </div>
+
+          <button class="btn primary" type="submit">Selar Ficha</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

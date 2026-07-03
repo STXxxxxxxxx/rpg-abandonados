@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Abandonados | Painel do Mestre</title>
+    <link rel="stylesheet" href="/public/styles/gothic.css" />
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <main class="page wide">
+      <section class="hero">
+        <div>
+          <p class="kicker">Olhos do Mestre</p>
+          <h1>Painel do Mestre</h1>
+          <p class="subtitle">
+            Gerencie a mesa em tempo real, acompanhe fichas de jogadores logados e copie os links
+            individuais de overlay para o OBS.
+          </p>
+        </div>
+        <div class="top-actions">
+          <span class="status-pill" id="socketStatus">Offline</span>
+          <form action="/logout" method="post">
+            <button class="btn ghost" type="submit">Sair</button>
+          </form>
+        </div>
+      </section>
+
+      <nav class="tabs" style="margin: 18px 0" aria-label="Navegacao do mestre">
+        <button class="tab active" type="button" data-master-tab="mesa">Gerenciamento da Mesa</button>
+        <button class="tab" type="button" data-master-tab="bestiario">Bestiario</button>
+      </nav>
+
+      <section id="mesaPanel">
+        <section class="panel environment-control multi-shop-control" style="margin-bottom: 16px; padding: 18px">
+          <div>
+            <p class="section-kicker">Controle de Ambiente</p>
+            <h2>Lojas liberadas</h2>
+            <p class="small">Cada loja aparece instantaneamente nas fichas dos jogadores conectados.</p>
+          </div>
+          <div class="shop-toggle-grid">
+            <% Object.entries(shopCatalog).forEach(([shopKey, shop]) => { %>
+              <label class="shop-toggle-row">
+                <span><%= shop.nome %></span>
+                <span class="gothic-switch">
+                  <input data-shop-toggle="<%= shopKey %>" type="checkbox" <%= activeShops[shopKey] ? "checked" : "" %> />
+                  <span></span>
+                </span>
+              </label>
+            <% }) %>
+          </div>
+        </section>
+
+        <section class="panel session-control" style="margin-bottom: 16px; padding: 18px">
+          <div>
+            <p class="section-kicker">Sessao</p>
+            <h2>Ritmo de sobrevivencia</h2>
+            <p class="small">
+              Com a sessao ativa, o servidor reduz fome e sede em 5 pontos a cada 20 minutos.
+            </p>
+          </div>
+          <div class="top-actions">
+            <span class="status-pill <%= isSessionActive ? "online" : "" %>" id="sessionStatus">
+              <%= isSessionActive ? "Sessao ativa" : "Sessao pausada" %>
+            </span>
+            <button class="btn primary" id="startSessionButton" type="button">Iniciar Sessao</button>
+            <button class="btn danger" id="endSessionButton" type="button">Finalizar Sessao</button>
+          </div>
+        </section>
+
+        <section class="panel ritual-log-panel" style="margin-bottom: 16px; padding: 18px">
+          <div class="panel-header" style="padding: 0 0 14px; margin-bottom: 14px">
+            <div>
+              <p class="section-kicker">Sinais de sacrificio</p>
+              <h2>Log de rituais</h2>
+            </div>
+          </div>
+          <ul class="plain-list compact-list ritual-log-list" id="ritualLogList">
+            <li><span>Nenhum ritual registrado nesta sessao.</span></li>
+          </ul>
+        </section>
+
+        <div class="panel-header panel" style="margin-bottom: 16px">
+          <div>
+            <p class="section-kicker">Mesa ativa</p>
+            <h2><span id="playerCount"><%= characters.length %></span> jogadores registrados</h2>
+          </div>
+          <button class="btn" id="refreshTableButton" type="button">Atualizar mesa</button>
+        </div>
+
+        <div class="grid cards" id="playersGrid"></div>
+      </section>
+
+      <section id="bestiarioPanel" class="panel hidden" style="padding: 24px">
+        <p class="section-kicker">Bestiario</p>
+        <h2>Grimorio de criaturas</h2>
+        <p class="subtitle">
+          Esta ala esta preparada para receber monstros, aparicoes, pragas e pressagios da campanha.
+          Nenhuma criatura foi catalogada ainda.
+        </p>
+      </section>
+    </main>
+
+    <div class="death-modal hidden" id="deathModal" role="dialog" aria-modal="true" aria-labelledby="deathModalTitle">
+      <section class="death-modal-card">
+        <p class="section-kicker">Morte definitiva</p>
+        <h2 id="deathModalTitle">Eliminar Personagem</h2>
+        <p class="subtitle">
+          Para confirmar a morte definitiva deste Abandonado, digite o nome do personagem em LETRAS MAIUSCULAS.
+        </p>
+        <p class="death-target">
+          Alvo: <strong id="deathCharacterName"></strong>
+        </p>
+        <label class="field">
+          Confirmacao obrigatoria
+          <input id="deathConfirmInput" type="text" autocomplete="off" />
+        </label>
+        <p class="small">Texto esperado: <strong id="deathExpectedName"></strong></p>
+        <div class="card-actions death-actions">
+          <button class="btn ghost" id="deathCancelButton" type="button">Cancelar</button>
+          <button class="btn danger" id="deathConfirmButton" type="button" disabled>Confirmar morte</button>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__CHARACTERS__ = <%- charactersJson %>;
+      window.__OBS_TOKEN__ = "<%= obsToken %>";
+      window.__ACTIVE_SHOPS__ = <%- activeShopsJson %>;
+      window.__RITUAL_LOG__ = <%- ritualLogJson %>;
+      window.__SESSION_ACTIVE__ = <%= isSessionActive ? "true" : "false" %>;
+    </script>
+    <script src="/public/js/mestre.js"></script>
+  </body>
+</html>
