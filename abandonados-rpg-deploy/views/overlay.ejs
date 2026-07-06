@@ -7,491 +7,342 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Playfair+Display:wght@700;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/public/styles/gothic.css" />
     <script src="/socket.io/socket.io.js"></script>
     <style>
       :root {
-        --hud-black: #050405;
-        --hud-iron: #171319;
-        --hud-iron-light: #5f5661;
-        --hud-iron-dark: #070607;
-        --hud-silver: #e7dfd0;
-        --hud-muted: #958a84;
-        --hud-violet: #120917;
-        --hud-violet-bright: #4b1b60;
-        --hud-crimson: #7d0618;
-        --hud-crimson-bright: #b30f27;
-        --hud-amethyst: #7e3195;
+        --black: #000000;
+        --black-soft: #050505;
+        --iron: #1a1a1a;
+        --iron-light: #2a2a2a;
+        --silver: #e5ded2;
+        --silver-muted: #8f887d;
+        --blood: #7f0615;
+        --blood-text: #d8c7c7;
+        --mind: #4c1768;
+        --mind-text: #d9d0e4;
       }
 
-      body.overlay-body {
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
         width: 100vw;
         height: 100vh;
         margin: 0;
         overflow: hidden;
         background: transparent;
+        font-family: "Cinzel", Georgia, serif;
       }
 
-      body.overlay-body::before {
-        display: none;
-      }
-
-      .overlay-body .forged-hud {
+      .overlay-shell {
         position: fixed;
-        left: 52px;
-        bottom: 48px;
-        width: min(1060px, calc(100vw - 104px));
-        padding: 0;
-        border: 0;
-        color: var(--hud-silver);
-        background: transparent;
-        box-shadow: none;
-        filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.86));
+        left: 54px;
+        bottom: 54px;
+        width: min(1060px, calc(100vw - 108px));
+        color: var(--silver);
       }
 
-      .overlay-body .forged-hud::before {
-        content: none;
-        display: none;
-      }
-
-      .hud-frame {
+      .hud {
         position: relative;
-        min-height: 172px;
-        display: grid;
-        grid-template-columns: minmax(330px, 0.95fr) minmax(286px, 0.78fr) minmax(320px, 0.82fr);
-        gap: 18px;
+        min-height: 154px;
+        display: flex;
         align-items: center;
-        padding: 24px 42px;
-        isolation: isolate;
-        background:
-          radial-gradient(circle at 50% 0%, rgba(126, 49, 149, 0.16), transparent 32%),
-          linear-gradient(180deg, rgba(37, 31, 38, 0.98), rgba(5, 4, 5, 0.98) 48%, rgba(19, 15, 20, 0.98)),
-          repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 7px);
-        border: 3px solid #070607;
-        outline: 1px solid rgba(160, 146, 142, 0.24);
+        gap: 28px;
+        padding: 24px 38px;
+        background: var(--black);
+        border: 2px solid var(--iron-light);
         clip-path: polygon(
-          4.5% 0,
-          95.5% 0,
-          98.5% 24%,
+          34px 0,
+          calc(100% - 34px) 0,
           100% 50%,
-          98.5% 76%,
-          95.5% 100%,
-          4.5% 100%,
-          1.5% 76%,
-          0 50%,
-          1.5% 24%
+          calc(100% - 34px) 100%,
+          34px 100%,
+          0 50%
         );
         box-shadow:
-          inset 0 0 0 2px rgba(116, 103, 109, 0.34),
-          inset 0 0 38px rgba(0, 0, 0, 0.95),
-          inset 0 0 72px rgba(126, 49, 149, 0.11);
+          0 18px 34px rgba(0, 0, 0, 0.92),
+          0 0 0 4px #050505,
+          inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+          inset 0 0 28px rgba(255, 255, 255, 0.025),
+          inset 0 -18px 28px rgba(0, 0, 0, 0.98);
       }
 
-      .hud-frame::before,
-      .hud-frame::after {
+      .hud::before,
+      .hud::after {
         content: "";
         position: absolute;
         top: 50%;
-        z-index: 0;
-        width: 86px;
-        height: 116px;
-        background:
-          linear-gradient(135deg, #060506, #2a232c 45%, #070607 78%),
-          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 9px);
-        border: 2px solid rgba(111, 101, 111, 0.55);
+        width: 58px;
+        height: 104px;
+        background: var(--black);
+        border: 2px solid var(--iron-light);
         box-shadow:
-          inset 0 0 18px rgba(0, 0, 0, 0.9),
-          0 0 18px rgba(126, 49, 149, 0.2);
+          inset 0 0 0 1px rgba(255, 255, 255, 0.045),
+          inset 0 0 18px rgba(0, 0, 0, 0.96),
+          0 10px 20px rgba(0, 0, 0, 0.76);
       }
 
-      .hud-frame > * {
-        position: relative;
-        z-index: 2;
-      }
-
-      .hud-frame::before {
-        left: -42px;
+      .hud::before {
+        left: -31px;
         transform: translateY(-50%);
-        clip-path: polygon(0 50%, 38% 0, 100% 18%, 78% 50%, 100% 82%, 38% 100%);
+        clip-path: polygon(0 50%, 42% 0, 100% 20%, 78% 50%, 100% 80%, 42% 100%);
       }
 
-      .hud-frame::after {
-        right: -42px;
+      .hud::after {
+        right: -31px;
         transform: translateY(-50%) scaleX(-1);
-        clip-path: polygon(0 50%, 38% 0, 100% 18%, 78% 50%, 100% 82%, 38% 100%);
+        clip-path: polygon(0 50%, 42% 0, 100% 20%, 78% 50%, 100% 80%, 42% 100%);
       }
 
-      .hud-gem {
-        position: absolute;
-        z-index: 3;
-        width: 22px;
-        height: 22px;
-        border: 2px solid rgba(17, 12, 18, 0.95);
-        background:
-          radial-gradient(circle at 38% 32%, rgba(246, 211, 255, 0.72), transparent 16%),
-          linear-gradient(135deg, var(--hud-crimson), var(--hud-amethyst));
-        box-shadow:
-          0 0 0 2px rgba(95, 86, 97, 0.38),
-          0 0 16px rgba(126, 49, 149, 0.42),
-          inset 0 0 12px rgba(0, 0, 0, 0.72);
-        transform: rotate(45deg);
-      }
-
-      .hud-gem-left {
-        left: 16px;
-        top: calc(50% - 11px);
-      }
-
-      .hud-gem-right {
-        right: 16px;
-        top: calc(50% - 11px);
-      }
-
-      .hud-gem-top {
-        top: -12px;
-        left: calc(50% - 11px);
-      }
-
-      .hud-gem-bottom {
-        bottom: -12px;
-        left: calc(50% - 11px);
-      }
-
-      .name-panel {
+      .name-plate {
         position: relative;
-        min-height: 88px;
+        flex: 1 1 42%;
+        min-width: 360px;
+        height: 86px;
         display: grid;
-        align-items: center;
-        padding: 16px 34px;
-        background:
-          linear-gradient(180deg, rgba(55, 27, 62, 0.58), rgba(18, 9, 23, 0.98) 45%, rgba(8, 5, 10, 0.98)),
-          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 12px);
-        border: 2px solid rgba(94, 83, 96, 0.72);
-        clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
+        place-items: center;
+        padding: 0 34px;
+        background: var(--black-soft);
+        border: 1px solid var(--iron-light);
+        clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0 50%);
         box-shadow:
-          inset 0 0 0 1px rgba(201, 188, 174, 0.12),
-          inset 0 0 28px rgba(126, 49, 149, 0.28),
-          0 0 24px rgba(0, 0, 0, 0.58);
+          inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+          inset 0 0 22px rgba(0, 0, 0, 0.95),
+          0 10px 20px rgba(0, 0, 0, 0.62);
       }
 
-      .name-panel::before,
-      .name-panel::after {
+      .name-plate::before,
+      .name-plate::after {
         content: "";
         position: absolute;
         top: 50%;
-        width: 28px;
-        height: 28px;
-        border: 2px solid rgba(8, 6, 8, 0.95);
-        background: linear-gradient(135deg, #3a153e, #8b1024);
-        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 12px rgba(126, 49, 149, 0.3);
-        transform: translateY(-50%) rotate(45deg);
+        width: 9px;
+        height: 52px;
+        background: #111111;
+        border: 1px solid #303030;
+        transform: translateY(-50%);
       }
 
-      .name-panel::before {
-        left: -5px;
+      .name-plate::before {
+        left: 17px;
       }
 
-      .name-panel::after {
-        right: -5px;
+      .name-plate::after {
+        right: 17px;
       }
 
       .overlay-title {
         position: relative;
-        z-index: 2;
+        z-index: 1;
+        max-width: 100%;
         margin: 0;
-        color: var(--hud-silver);
-        font-family: "Cinzel", "Playfair Display", Georgia, serif;
-        font-size: clamp(1.65rem, 2.7vw, 2.45rem);
+        color: var(--silver);
+        font-size: clamp(1.7rem, 2.35vw, 2.35rem);
         font-weight: 900;
-        line-height: 1.05;
+        line-height: 1;
         letter-spacing: 0.18em;
-        text-transform: uppercase;
         text-align: center;
-        text-shadow:
-          0 1px 0 #070607,
-          0 0 18px rgba(231, 223, 208, 0.18),
-          0 0 22px rgba(126, 49, 149, 0.28);
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-shadow: 0 2px 0 #000, 0 0 16px rgba(229, 222, 210, 0.12);
       }
 
-      .hud-stat {
-        position: relative;
+      .stats {
+        flex: 0 0 560px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 22px;
+      }
+
+      .stat {
+        flex: 1 1 0;
         display: grid;
-        grid-template-columns: 82px minmax(0, 1fr);
-        gap: 14px;
+        grid-template-columns: 74px 1fr;
+        gap: 12px;
         align-items: center;
       }
 
-      .hud-medallion {
-        position: relative;
-        width: 82px;
-        height: 82px;
+      .medallion {
+        width: 74px;
+        height: 74px;
         display: grid;
         place-items: center;
-        border-radius: 50%;
-        background:
-          radial-gradient(circle at 42% 34%, rgba(168, 157, 162, 0.42), transparent 19%),
-          radial-gradient(circle at 50% 50%, #171219 0 48%, #050405 49% 100%);
-        border: 3px solid #090709;
+        border-radius: 999px;
+        background: #000;
+        border: 2px solid #262626;
         box-shadow:
-          inset 0 0 0 3px rgba(95, 86, 97, 0.7),
-          inset 0 0 0 7px rgba(10, 8, 10, 0.95),
-          inset 0 0 22px rgba(0, 0, 0, 0.94),
-          0 0 22px rgba(0, 0, 0, 0.7);
+          0 8px 16px rgba(0, 0, 0, 0.72),
+          inset 0 0 0 3px #070707,
+          inset 0 0 0 5px #222,
+          inset 0 0 18px rgba(0, 0, 0, 0.98);
       }
 
-      .hud-medallion::before {
-        content: "";
-        position: absolute;
-        inset: -8px;
-        border-radius: 50%;
-        background:
-          conic-gradient(
-            from 45deg,
-            transparent 0 10deg,
-            rgba(120, 107, 118, 0.5) 10deg 18deg,
-            transparent 18deg 45deg,
-            rgba(126, 49, 149, 0.24) 45deg 54deg,
-            transparent 54deg 90deg
-          );
-        filter: drop-shadow(0 0 8px rgba(126, 49, 149, 0.24));
+      .medallion svg {
+        width: 34px;
+        height: 34px;
+        display: block;
+        filter: drop-shadow(0 0 7px currentColor);
       }
 
-      .hud-medallion svg {
-        position: relative;
-        z-index: 2;
-        width: 42px;
-        height: 42px;
-        filter: drop-shadow(0 0 10px currentColor);
+      .stat-life .medallion {
+        color: var(--blood);
       }
 
-      .hud-pv .hud-medallion svg {
-        color: var(--hud-crimson-bright);
-      }
-
-      .hud-ps .hud-medallion svg {
-        color: var(--hud-amethyst);
+      .stat-mind .medallion {
+        color: var(--mind);
       }
 
       .stat-body {
         display: grid;
-        gap: 8px;
+        gap: 7px;
         min-width: 0;
       }
 
-      .overlay-vital-label {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        color: #c8baac;
-        font-family: "Cinzel", "Playfair Display", Georgia, serif;
-        font-size: 1.02rem;
+      .stat-label {
+        color: var(--silver-muted);
+        font-size: 0.88rem;
         font-weight: 900;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        text-shadow: 0 0 14px rgba(231, 223, 208, 0.16);
-      }
-
-      .overlay-vital-label::before,
-      .overlay-vital-label::after {
-        content: "";
-        width: 34px;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(201, 188, 174, 0.7), transparent);
-      }
-
-      .stat-value-capsule {
-        position: relative;
-        min-height: 62px;
-        display: grid;
-        place-items: center;
-        padding: 7px 22px;
-        border: 2px solid rgba(92, 83, 91, 0.78);
-        background:
-          linear-gradient(180deg, rgba(25, 21, 25, 0.98), rgba(4, 4, 4, 0.98)),
-          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 7px);
-        clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);
-        box-shadow:
-          inset 0 0 0 1px rgba(230, 218, 202, 0.1),
-          inset 0 0 26px rgba(0, 0, 0, 0.9);
-      }
-
-      .hud-pv .stat-value-capsule {
-        box-shadow:
-          inset 0 0 0 1px rgba(230, 218, 202, 0.1),
-          inset 0 0 30px rgba(125, 6, 24, 0.46),
-          0 0 18px rgba(125, 6, 24, 0.18);
-      }
-
-      .hud-ps .stat-value-capsule {
-        box-shadow:
-          inset 0 0 0 1px rgba(230, 218, 202, 0.1),
-          inset 0 0 30px rgba(75, 27, 96, 0.58),
-          0 0 18px rgba(126, 49, 149, 0.18);
-      }
-
-      .overlay-vital-number {
-        color: #f4eee5;
-        font-family: "Cinzel", "Playfair Display", Georgia, serif;
-        font-size: 2.82rem;
-        font-weight: 900;
-        line-height: 1;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.16em;
         text-align: center;
-        text-shadow: 0 1px 0 #000, 0 0 16px rgba(255, 255, 255, 0.13);
+        text-transform: uppercase;
         white-space: nowrap;
       }
 
-      .overlay-aux {
-        position: absolute;
-        left: 50%;
-        bottom: 11px;
-        display: flex;
-        gap: 18px;
-        align-items: center;
-        justify-content: center;
-        transform: translateX(-50%);
-        color: var(--hud-muted);
-        font-family: "Cinzel", Georgia, serif;
-        font-size: 0.76rem;
+      .value-box {
+        min-height: 52px;
+        display: grid;
+        place-items: center;
+        padding: 0 18px;
+        background: #000;
+        border: 1px solid #292929;
+        clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+          inset 0 0 18px rgba(0, 0, 0, 0.98),
+          0 8px 16px rgba(0, 0, 0, 0.62);
+      }
+
+      .stat-number {
+        font-size: 2.36rem;
         font-weight: 900;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
+        line-height: 1;
+        letter-spacing: 0.04em;
+        text-align: center;
+        white-space: nowrap;
       }
 
-      .overlay-mini-stat {
-        display: inline-flex;
-        align-items: center;
-        min-height: 22px;
-        padding: 2px 10px;
-        border: 1px solid rgba(95, 86, 97, 0.52);
-        background: rgba(3, 3, 3, 0.56);
-        clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+      .stat-life .stat-number {
+        color: var(--blood-text);
+        text-shadow: 0 0 10px rgba(127, 6, 21, 0.24);
       }
 
-      .hidden {
-        display: none !important;
+      .stat-mind .stat-number {
+        color: var(--mind-text);
+        text-shadow: 0 0 10px rgba(76, 23, 104, 0.24);
       }
 
-      .forged-hud.hud-shake {
+      .overlay-shell.hud-shake {
         animation: hudShake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
       }
 
       @keyframes hudShake {
         0%,
         100% {
-          transform: translate(0, 0) rotate(0);
+          transform: translate(0, 0);
         }
 
-        12% {
-          transform: translate(-5px, 2px) rotate(-0.3deg);
+        20% {
+          transform: translate(-4px, 2px);
         }
 
-        24% {
-          transform: translate(6px, -2px) rotate(0.25deg);
+        40% {
+          transform: translate(5px, -2px);
         }
 
-        36% {
-          transform: translate(-4px, -3px) rotate(-0.2deg);
+        60% {
+          transform: translate(-3px, -2px);
         }
 
-        52% {
-          transform: translate(5px, 3px) rotate(0.18deg);
-        }
-
-        68% {
-          transform: translate(-3px, 1px) rotate(-0.12deg);
-        }
-
-        84% {
-          transform: translate(2px, -1px) rotate(0.08deg);
+        80% {
+          transform: translate(3px, 1px);
         }
       }
 
       @media (max-width: 980px) {
-        .overlay-body .forged-hud {
+        .overlay-shell {
           left: 24px;
           bottom: 24px;
           width: calc(100vw - 48px);
         }
 
-        .hud-frame {
-          grid-template-columns: 1fr;
+        .hud {
           gap: 18px;
-          padding: 28px 34px 38px;
+          padding: 20px 30px;
         }
 
-        .hud-stat {
-          grid-template-columns: 72px 1fr;
+        .name-plate {
+          min-width: 280px;
+        }
+
+        .stats {
+          flex-basis: 500px;
+          gap: 14px;
         }
       }
     </style>
   </head>
-  <body class="overlay-body">
-    <aside class="overlay-shell forged-hud" aria-live="polite">
-      <div class="hud-frame">
-        <span class="hud-gem hud-gem-left" aria-hidden="true"></span>
-        <span class="hud-gem hud-gem-right" aria-hidden="true"></span>
-        <span class="hud-gem hud-gem-top" aria-hidden="true"></span>
-        <span class="hud-gem hud-gem-bottom" aria-hidden="true"></span>
-
-        <section class="name-panel" aria-label="Nome do personagem">
+  <body>
+    <aside class="overlay-shell" aria-live="polite">
+      <main class="hud">
+        <section class="name-plate" aria-label="Nome do personagem">
           <h1 class="overlay-title" id="overlayName"><%= character.nome %></h1>
         </section>
 
-        <section class="hud-stat hud-pv overlay-vital overlay-vital-pv" aria-label="Vida">
-          <div class="hud-medallion" aria-hidden="true">
-            <svg viewBox="0 0 64 64" role="img" aria-label="Coracao">
-              <path
-                fill="currentColor"
-                d="M32 56s-3.8-3.1-8.4-7.1C14.5 41 6 33.5 6 22.4 6 14.9 11.4 9 18.4 9c4.3 0 8.5 2.2 11 5.8L32 18.6l2.6-3.8C37.1 11.2 41.3 9 45.6 9 52.6 9 58 14.9 58 22.4 58 33.5 49.5 41 40.4 48.9 35.8 52.9 32 56 32 56Z"
-              />
-              <path
-                fill="#1b0508"
-                opacity="0.58"
-                d="M31.2 47.4 18.8 35.1h8.4l3.1-8.7 5.6 17.1 3.4-8.4h6.8L40.4 40h-3.2L35 45.6c-.6 1.5-2.7 1.7-3.8.5Z"
-              />
-            </svg>
-          </div>
-          <div class="stat-body">
-            <span class="overlay-vital-label">&#10022; Vida &#10022;</span>
-            <div class="stat-value-capsule">
-              <strong class="overlay-vital-number" id="overlayPv">0 / 0</strong>
+        <section class="stats" aria-label="Status vitais">
+          <article class="stat stat-life" aria-label="Vida">
+            <div class="medallion" aria-hidden="true">
+              <svg viewBox="0 0 64 64" role="img" aria-label="Coracao">
+                <path
+                  fill="currentColor"
+                  d="M32 55S7 39.7 7 22.6C7 14.9 12.5 9 19.5 9c4.7 0 9.1 2.6 11.5 6.7L32 17.3l1-1.6C35.4 11.6 39.8 9 44.5 9 51.5 9 57 14.9 57 22.6 57 39.7 32 55 32 55Z"
+                />
+              </svg>
             </div>
-          </div>
-        </section>
 
-        <section class="hud-stat hud-ps overlay-vital overlay-vital-ps" aria-label="Sanidade">
-          <div class="hud-medallion" aria-hidden="true">
-            <svg viewBox="0 0 64 64" role="img" aria-label="Cerebro">
-              <path
-                fill="currentColor"
-                d="M23.3 9.2c-5.4 0-9.8 4-10.4 9.1C8.7 20 6 24.1 6 28.8c0 3.4 1.4 6.4 3.8 8.6-.1.6-.2 1.2-.2 1.9 0 5.2 4.2 9.4 9.4 9.4h2.1c1.3 4.1 5.1 7.1 9.6 7.1 5.6 0 10.1-4.5 10.1-10.1V17.4c0-4.5-3.7-8.2-8.2-8.2-2.7 0-5.1 1.3-6.6 3.3-1.1-2-3.1-3.3-2.7-3.3Zm17.4 1.1v45.3h3.1c4.7 0 8.7-3.4 9.5-7.9 3.2-1.6 5.5-5 5.5-8.9 0-2.2-.7-4.2-1.9-5.8 1-1.6 1.6-3.5 1.6-5.6 0-5.4-4-9.8-9.2-10.5C48.4 12 44.8 9.2 40.7 10.3Z"
-              />
-              <path
-                fill="#120917"
-                opacity="0.66"
-                d="M17.8 25.7c0-4.2 3.3-7.5 7.5-7.5v4.7c-1.6 0-2.8 1.2-2.8 2.8h-4.7Zm9.2 21.2c-4.4-.7-7.7-4.4-7.7-8.9H24c0 2.2 1.7 4.1 3.9 4.4l-.9 4.5Zm19.7-10.8h-4.5c0-2.1 1.7-3.8 3.8-3.8v-4.4c-4.5 0-8.3 3.7-8.3 8.2h-4.5c0-4.5-3.7-8.2-8.2-8.2v-4.5c5.1 0 9.5 2.8 11.7 7 2.1-1.7 4.7-2.7 7.6-2.7v4.6c-2.1 0-3.8 1.7-3.8 3.8Z"
-              />
-            </svg>
-          </div>
-          <div class="stat-body">
-            <span class="overlay-vital-label">&#10022; Sanidade &#10022;</span>
-            <div class="stat-value-capsule">
-              <strong class="overlay-vital-number" id="overlayPs">0 / 0</strong>
+            <div class="stat-body">
+              <div class="stat-label">&#10022; Vida &#10022;</div>
+              <div class="value-box">
+                <strong class="stat-number" id="overlayPv">0 / 0</strong>
+              </div>
             </div>
-          </div>
-        </section>
+          </article>
 
-        <footer class="overlay-aux" aria-label="Status secundarios">
-          <span class="overlay-mini-stat" id="overlayDef">&#128737;&#65039; DEF 0</span>
-          <span class="overlay-mini-stat overlay-ammo-stat hidden" id="overlayAmmo">&#9889; 0 / 0</span>
-        </footer>
-      </div>
+          <article class="stat stat-mind" aria-label="Sanidade">
+            <div class="medallion" aria-hidden="true">
+              <svg viewBox="0 0 64 64" role="img" aria-label="Cerebro">
+                <path
+                  fill="currentColor"
+                  d="M22.3 8.8c-5.3 0-9.7 3.9-10.4 9C8.2 19.6 6 23.4 6 27.8c0 3.4 1.4 6.4 3.8 8.5-.3.9-.4 1.8-.4 2.7 0 5.3 4.3 9.6 9.6 9.6h2.3c1.3 4 5.1 6.9 9.6 6.9 5.5 0 10-4.5 10-10V17c0-4.6-3.7-8.2-8.2-8.2-2.6 0-4.9 1.2-6.4 3.1-1-1.9-2.5-3.1-4-3.1Zm18.7 1.5v45.2h3c4.7 0 8.7-3.4 9.5-7.9 3.2-1.7 5.4-5 5.4-8.9 0-2.2-.7-4.2-1.9-5.9 1-1.6 1.6-3.5 1.6-5.5 0-5.3-3.9-9.7-9-10.4-.9-4.5-4.5-7.6-8.6-6.6Z"
+                />
+              </svg>
+            </div>
+
+            <div class="stat-body">
+              <div class="stat-label">&#10022; Sanidade &#10022;</div>
+              <div class="value-box">
+                <strong class="stat-number" id="overlayPs">0 / 0</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
     </aside>
 
     <script>
