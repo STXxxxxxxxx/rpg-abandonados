@@ -4,31 +4,494 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Overlay | <%= character.nome %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Playfair+Display:wght@700;900&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/public/styles/gothic.css" />
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+      :root {
+        --hud-black: #050405;
+        --hud-iron: #171319;
+        --hud-iron-light: #5f5661;
+        --hud-iron-dark: #070607;
+        --hud-silver: #e7dfd0;
+        --hud-muted: #958a84;
+        --hud-violet: #120917;
+        --hud-violet-bright: #4b1b60;
+        --hud-crimson: #7d0618;
+        --hud-crimson-bright: #b30f27;
+        --hud-amethyst: #7e3195;
+      }
+
+      body.overlay-body {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+      }
+
+      body.overlay-body::before {
+        display: none;
+      }
+
+      .overlay-body .forged-hud {
+        position: fixed;
+        left: 52px;
+        bottom: 48px;
+        width: min(1060px, calc(100vw - 104px));
+        padding: 0;
+        border: 0;
+        color: var(--hud-silver);
+        background: transparent;
+        box-shadow: none;
+        filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.86));
+      }
+
+      .overlay-body .forged-hud::before {
+        content: none;
+        display: none;
+      }
+
+      .hud-frame {
+        position: relative;
+        min-height: 172px;
+        display: grid;
+        grid-template-columns: minmax(330px, 0.95fr) minmax(286px, 0.78fr) minmax(320px, 0.82fr);
+        gap: 18px;
+        align-items: center;
+        padding: 24px 42px;
+        isolation: isolate;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(126, 49, 149, 0.16), transparent 32%),
+          linear-gradient(180deg, rgba(37, 31, 38, 0.98), rgba(5, 4, 5, 0.98) 48%, rgba(19, 15, 20, 0.98)),
+          repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 7px);
+        border: 3px solid #070607;
+        outline: 1px solid rgba(160, 146, 142, 0.24);
+        clip-path: polygon(
+          4.5% 0,
+          95.5% 0,
+          98.5% 24%,
+          100% 50%,
+          98.5% 76%,
+          95.5% 100%,
+          4.5% 100%,
+          1.5% 76%,
+          0 50%,
+          1.5% 24%
+        );
+        box-shadow:
+          inset 0 0 0 2px rgba(116, 103, 109, 0.34),
+          inset 0 0 38px rgba(0, 0, 0, 0.95),
+          inset 0 0 72px rgba(126, 49, 149, 0.11);
+      }
+
+      .hud-frame::before,
+      .hud-frame::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        z-index: 0;
+        width: 86px;
+        height: 116px;
+        background:
+          linear-gradient(135deg, #060506, #2a232c 45%, #070607 78%),
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 9px);
+        border: 2px solid rgba(111, 101, 111, 0.55);
+        box-shadow:
+          inset 0 0 18px rgba(0, 0, 0, 0.9),
+          0 0 18px rgba(126, 49, 149, 0.2);
+      }
+
+      .hud-frame > * {
+        position: relative;
+        z-index: 2;
+      }
+
+      .hud-frame::before {
+        left: -42px;
+        transform: translateY(-50%);
+        clip-path: polygon(0 50%, 38% 0, 100% 18%, 78% 50%, 100% 82%, 38% 100%);
+      }
+
+      .hud-frame::after {
+        right: -42px;
+        transform: translateY(-50%) scaleX(-1);
+        clip-path: polygon(0 50%, 38% 0, 100% 18%, 78% 50%, 100% 82%, 38% 100%);
+      }
+
+      .hud-gem {
+        position: absolute;
+        z-index: 3;
+        width: 22px;
+        height: 22px;
+        border: 2px solid rgba(17, 12, 18, 0.95);
+        background:
+          radial-gradient(circle at 38% 32%, rgba(246, 211, 255, 0.72), transparent 16%),
+          linear-gradient(135deg, var(--hud-crimson), var(--hud-amethyst));
+        box-shadow:
+          0 0 0 2px rgba(95, 86, 97, 0.38),
+          0 0 16px rgba(126, 49, 149, 0.42),
+          inset 0 0 12px rgba(0, 0, 0, 0.72);
+        transform: rotate(45deg);
+      }
+
+      .hud-gem-left {
+        left: 16px;
+        top: calc(50% - 11px);
+      }
+
+      .hud-gem-right {
+        right: 16px;
+        top: calc(50% - 11px);
+      }
+
+      .hud-gem-top {
+        top: -12px;
+        left: calc(50% - 11px);
+      }
+
+      .hud-gem-bottom {
+        bottom: -12px;
+        left: calc(50% - 11px);
+      }
+
+      .name-panel {
+        position: relative;
+        min-height: 88px;
+        display: grid;
+        align-items: center;
+        padding: 16px 34px;
+        background:
+          linear-gradient(180deg, rgba(55, 27, 62, 0.58), rgba(18, 9, 23, 0.98) 45%, rgba(8, 5, 10, 0.98)),
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 12px);
+        border: 2px solid rgba(94, 83, 96, 0.72);
+        clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
+        box-shadow:
+          inset 0 0 0 1px rgba(201, 188, 174, 0.12),
+          inset 0 0 28px rgba(126, 49, 149, 0.28),
+          0 0 24px rgba(0, 0, 0, 0.58);
+      }
+
+      .name-panel::before,
+      .name-panel::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 28px;
+        height: 28px;
+        border: 2px solid rgba(8, 6, 8, 0.95);
+        background: linear-gradient(135deg, #3a153e, #8b1024);
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 12px rgba(126, 49, 149, 0.3);
+        transform: translateY(-50%) rotate(45deg);
+      }
+
+      .name-panel::before {
+        left: -5px;
+      }
+
+      .name-panel::after {
+        right: -5px;
+      }
+
+      .overlay-title {
+        position: relative;
+        z-index: 2;
+        margin: 0;
+        color: var(--hud-silver);
+        font-family: "Cinzel", "Playfair Display", Georgia, serif;
+        font-size: clamp(1.65rem, 2.7vw, 2.45rem);
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        text-align: center;
+        text-shadow:
+          0 1px 0 #070607,
+          0 0 18px rgba(231, 223, 208, 0.18),
+          0 0 22px rgba(126, 49, 149, 0.28);
+      }
+
+      .hud-stat {
+        position: relative;
+        display: grid;
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 14px;
+        align-items: center;
+      }
+
+      .hud-medallion {
+        position: relative;
+        width: 82px;
+        height: 82px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 42% 34%, rgba(168, 157, 162, 0.42), transparent 19%),
+          radial-gradient(circle at 50% 50%, #171219 0 48%, #050405 49% 100%);
+        border: 3px solid #090709;
+        box-shadow:
+          inset 0 0 0 3px rgba(95, 86, 97, 0.7),
+          inset 0 0 0 7px rgba(10, 8, 10, 0.95),
+          inset 0 0 22px rgba(0, 0, 0, 0.94),
+          0 0 22px rgba(0, 0, 0, 0.7);
+      }
+
+      .hud-medallion::before {
+        content: "";
+        position: absolute;
+        inset: -8px;
+        border-radius: 50%;
+        background:
+          conic-gradient(
+            from 45deg,
+            transparent 0 10deg,
+            rgba(120, 107, 118, 0.5) 10deg 18deg,
+            transparent 18deg 45deg,
+            rgba(126, 49, 149, 0.24) 45deg 54deg,
+            transparent 54deg 90deg
+          );
+        filter: drop-shadow(0 0 8px rgba(126, 49, 149, 0.24));
+      }
+
+      .hud-medallion svg {
+        position: relative;
+        z-index: 2;
+        width: 42px;
+        height: 42px;
+        filter: drop-shadow(0 0 10px currentColor);
+      }
+
+      .hud-pv .hud-medallion svg {
+        color: var(--hud-crimson-bright);
+      }
+
+      .hud-ps .hud-medallion svg {
+        color: var(--hud-amethyst);
+      }
+
+      .stat-body {
+        display: grid;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .overlay-vital-label {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: #c8baac;
+        font-family: "Cinzel", "Playfair Display", Georgia, serif;
+        font-size: 1.02rem;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        text-shadow: 0 0 14px rgba(231, 223, 208, 0.16);
+      }
+
+      .overlay-vital-label::before,
+      .overlay-vital-label::after {
+        content: "";
+        width: 34px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(201, 188, 174, 0.7), transparent);
+      }
+
+      .stat-value-capsule {
+        position: relative;
+        min-height: 62px;
+        display: grid;
+        place-items: center;
+        padding: 7px 22px;
+        border: 2px solid rgba(92, 83, 91, 0.78);
+        background:
+          linear-gradient(180deg, rgba(25, 21, 25, 0.98), rgba(4, 4, 4, 0.98)),
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 7px);
+        clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);
+        box-shadow:
+          inset 0 0 0 1px rgba(230, 218, 202, 0.1),
+          inset 0 0 26px rgba(0, 0, 0, 0.9);
+      }
+
+      .hud-pv .stat-value-capsule {
+        box-shadow:
+          inset 0 0 0 1px rgba(230, 218, 202, 0.1),
+          inset 0 0 30px rgba(125, 6, 24, 0.46),
+          0 0 18px rgba(125, 6, 24, 0.18);
+      }
+
+      .hud-ps .stat-value-capsule {
+        box-shadow:
+          inset 0 0 0 1px rgba(230, 218, 202, 0.1),
+          inset 0 0 30px rgba(75, 27, 96, 0.58),
+          0 0 18px rgba(126, 49, 149, 0.18);
+      }
+
+      .overlay-vital-number {
+        color: #f4eee5;
+        font-family: "Cinzel", "Playfair Display", Georgia, serif;
+        font-size: 2.82rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.06em;
+        text-align: center;
+        text-shadow: 0 1px 0 #000, 0 0 16px rgba(255, 255, 255, 0.13);
+        white-space: nowrap;
+      }
+
+      .overlay-aux {
+        position: absolute;
+        left: 50%;
+        bottom: 11px;
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        justify-content: center;
+        transform: translateX(-50%);
+        color: var(--hud-muted);
+        font-family: "Cinzel", Georgia, serif;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .overlay-mini-stat {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 2px 10px;
+        border: 1px solid rgba(95, 86, 97, 0.52);
+        background: rgba(3, 3, 3, 0.56);
+        clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .forged-hud.hud-shake {
+        animation: hudShake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      }
+
+      @keyframes hudShake {
+        0%,
+        100% {
+          transform: translate(0, 0) rotate(0);
+        }
+
+        12% {
+          transform: translate(-5px, 2px) rotate(-0.3deg);
+        }
+
+        24% {
+          transform: translate(6px, -2px) rotate(0.25deg);
+        }
+
+        36% {
+          transform: translate(-4px, -3px) rotate(-0.2deg);
+        }
+
+        52% {
+          transform: translate(5px, 3px) rotate(0.18deg);
+        }
+
+        68% {
+          transform: translate(-3px, 1px) rotate(-0.12deg);
+        }
+
+        84% {
+          transform: translate(2px, -1px) rotate(0.08deg);
+        }
+      }
+
+      @media (max-width: 980px) {
+        .overlay-body .forged-hud {
+          left: 24px;
+          bottom: 24px;
+          width: calc(100vw - 48px);
+        }
+
+        .hud-frame {
+          grid-template-columns: 1fr;
+          gap: 18px;
+          padding: 28px 34px 38px;
+        }
+
+        .hud-stat {
+          grid-template-columns: 72px 1fr;
+        }
+      }
+    </style>
   </head>
   <body class="overlay-body">
-    <aside class="overlay-shell overlay-minimal" aria-live="polite">
-      <header class="overlay-header">
-        <p class="overlay-kicker">Abandonado</p>
-        <h1 class="overlay-title" id="overlayName"><%= character.nome %></h1>
-      </header>
+    <aside class="overlay-shell forged-hud" aria-live="polite">
+      <div class="hud-frame">
+        <span class="hud-gem hud-gem-left" aria-hidden="true"></span>
+        <span class="hud-gem hud-gem-right" aria-hidden="true"></span>
+        <span class="hud-gem hud-gem-top" aria-hidden="true"></span>
+        <span class="hud-gem hud-gem-bottom" aria-hidden="true"></span>
 
-      <section class="overlay-vitals" aria-label="Status vitais">
-        <article class="overlay-vital overlay-vital-pv">
-          <span class="overlay-vital-label">PV</span>
-          <strong class="overlay-vital-number" id="overlayPv">0 / 0</strong>
-        </article>
-        <article class="overlay-vital overlay-vital-ps">
-          <span class="overlay-vital-label">PS</span>
-          <strong class="overlay-vital-number" id="overlayPs">0 / 0</strong>
-        </article>
-      </section>
+        <section class="name-panel" aria-label="Nome do personagem">
+          <h1 class="overlay-title" id="overlayName"><%= character.nome %></h1>
+        </section>
 
-      <footer class="overlay-footer">
-        <span class="overlay-mini-stat" id="overlayDef">&#128737;&#65039; DEF 0</span>
-        <span class="overlay-mini-stat overlay-ammo-stat hidden" id="overlayAmmo">&#9889; 0 / 0</span>
-      </footer>
+        <section class="hud-stat hud-pv overlay-vital overlay-vital-pv" aria-label="Vida">
+          <div class="hud-medallion" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img" aria-label="Coracao">
+              <path
+                fill="currentColor"
+                d="M32 56s-3.8-3.1-8.4-7.1C14.5 41 6 33.5 6 22.4 6 14.9 11.4 9 18.4 9c4.3 0 8.5 2.2 11 5.8L32 18.6l2.6-3.8C37.1 11.2 41.3 9 45.6 9 52.6 9 58 14.9 58 22.4 58 33.5 49.5 41 40.4 48.9 35.8 52.9 32 56 32 56Z"
+              />
+              <path
+                fill="#1b0508"
+                opacity="0.58"
+                d="M31.2 47.4 18.8 35.1h8.4l3.1-8.7 5.6 17.1 3.4-8.4h6.8L40.4 40h-3.2L35 45.6c-.6 1.5-2.7 1.7-3.8.5Z"
+              />
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="overlay-vital-label">&#10022; Vida &#10022;</span>
+            <div class="stat-value-capsule">
+              <strong class="overlay-vital-number" id="overlayPv">0 / 0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="hud-stat hud-ps overlay-vital overlay-vital-ps" aria-label="Sanidade">
+          <div class="hud-medallion" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img" aria-label="Cerebro">
+              <path
+                fill="currentColor"
+                d="M23.3 9.2c-5.4 0-9.8 4-10.4 9.1C8.7 20 6 24.1 6 28.8c0 3.4 1.4 6.4 3.8 8.6-.1.6-.2 1.2-.2 1.9 0 5.2 4.2 9.4 9.4 9.4h2.1c1.3 4.1 5.1 7.1 9.6 7.1 5.6 0 10.1-4.5 10.1-10.1V17.4c0-4.5-3.7-8.2-8.2-8.2-2.7 0-5.1 1.3-6.6 3.3-1.1-2-3.1-3.3-2.7-3.3Zm17.4 1.1v45.3h3.1c4.7 0 8.7-3.4 9.5-7.9 3.2-1.6 5.5-5 5.5-8.9 0-2.2-.7-4.2-1.9-5.8 1-1.6 1.6-3.5 1.6-5.6 0-5.4-4-9.8-9.2-10.5C48.4 12 44.8 9.2 40.7 10.3Z"
+              />
+              <path
+                fill="#120917"
+                opacity="0.66"
+                d="M17.8 25.7c0-4.2 3.3-7.5 7.5-7.5v4.7c-1.6 0-2.8 1.2-2.8 2.8h-4.7Zm9.2 21.2c-4.4-.7-7.7-4.4-7.7-8.9H24c0 2.2 1.7 4.1 3.9 4.4l-.9 4.5Zm19.7-10.8h-4.5c0-2.1 1.7-3.8 3.8-3.8v-4.4c-4.5 0-8.3 3.7-8.3 8.2h-4.5c0-4.5-3.7-8.2-8.2-8.2v-4.5c5.1 0 9.5 2.8 11.7 7 2.1-1.7 4.7-2.7 7.6-2.7v4.6c-2.1 0-3.8 1.7-3.8 3.8Z"
+              />
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="overlay-vital-label">&#10022; Sanidade &#10022;</span>
+            <div class="stat-value-capsule">
+              <strong class="overlay-vital-number" id="overlayPs">0 / 0</strong>
+            </div>
+          </div>
+        </section>
+
+        <footer class="overlay-aux" aria-label="Status secundarios">
+          <span class="overlay-mini-stat" id="overlayDef">&#128737;&#65039; DEF 0</span>
+          <span class="overlay-mini-stat overlay-ammo-stat hidden" id="overlayAmmo">&#9889; 0 / 0</span>
+        </footer>
+      </div>
     </aside>
 
     <script>
